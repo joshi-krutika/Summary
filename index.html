@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Network Visualization with Cytoscape.js</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.21.1/cytoscape.min.js"></script>
+    <style>
+        #cy {
+            width: 100%;
+            height: 100vh;
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div id="cy"></div>
+    <script>
+        // Function to fetch the JSON data
+        async function fetchNetworkData() {
+            const response = await fetch('network_cytoscape.json');
+            return await response.json();
+        }
+
+        // Initialize Cytoscape with the network data
+        async function initCytoscape() {
+            const networkData = await fetchNetworkData();
+
+            var cy = cytoscape({
+                container: document.getElementById('cy'),
+                elements: networkData.elements,
+                style: [
+                    {
+                        selector: 'node',
+                        style: {
+                            'background-color': '#666',
+                            'label': 'data(id)'
+                        }
+                    },
+                    {
+                        selector: 'edge',
+                        style: {
+                            'width': 'data(weight)*1+1'
+                        }
+                    }
+                ],
+                layout: {
+                    name: 'cose', // The layout algorithm to use; you can change this to 'grid', 'circle', etc.
+                    fit: true, // Whether to fit the network to the viewport
+                    padding: 30 // Padding around the network
+                }
+            });
+        }
+
+        // Call the function to initialize Cytoscape
+        initCytoscape();
+    </script>
+</body>
+</html>
