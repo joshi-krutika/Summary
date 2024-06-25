@@ -1,57 +1,171 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Network Visualization with Cytoscape.js</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.21.1/cytoscape.min.js"></script>
+    <meta charset="UTF-8">
+    <title>Cytoscape.js Example</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.20.0/cytoscape.min.js"></script>
     <style>
         #cy {
-            width: 100%;
-            height: 100vh;
-            display: block;
+            width: 800px;
+            height: 600px;
+            border: 1px solid black;
+        }
+        #compute {
+            margin-top: 10px;
         }
     </style>
 </head>
 <body>
     <div id="cy"></div>
+    <button id="compute">Compute</button>
+
     <script>
-        // Function to fetch the JSON data
-        async function fetchNetworkData() {
-            const response = await fetch('network_cytoscape.json');
-            return await response.json();
-        }
-
-        // Initialize Cytoscape with the network data
-        async function initCytoscape() {
-            const networkData = await fetchNetworkData();
-
+        document.addEventListener('DOMContentLoaded', function() {
             var cy = cytoscape({
                 container: document.getElementById('cy'),
-                elements: networkData.elements,
+                elements: {
+                    nodes: [
+                        { data: { id: 'I1', group: 'ing', cost: 5} },
+                        { data: { id: 'I2', group: 'ing', cost: 1 } },
+                        { data: { id: 'I3', group: 'ing', cost: 5 } },
+                        { data: { id: 'I4', group: 'ing', cost: 3 } },
+                        { data: { id: 'I5', group: 'ing', cost: 3 } },
+                        { data: { id: 'I6', group: 'ing', cost: 1 } },
+                        { data: { id: 'I7', group: 'ing', cost: 1 } },
+                        { data: { id: 'I8', group: 'ing', cost: 5 } },
+                        { data: { id: 'I9', group: 'ing', cost: 3 } },
+                        { data: { id: 'B2', group: 'ben' } },
+                        { data: { id: 'B1', group: 'ben' } },
+                        { data: { id: 'B3', group: 'ben' } }
+                    ],
+                    edges: [
+                        { data: { id: 'edge1', source: 'I1', target: 'B1' } },
+                        { data: { id: 'edge2', source: 'I2', target: 'B2' } },
+                        { data: { id: 'edge3', source: 'I3', target: 'B3' } },
+                        { data: { id: 'edge4', source: 'I4', target: 'B1' } },
+                        { data: { id: 'edge5', source: 'I5', target: 'B2' } },
+                        { data: { id: 'edge6', source: 'I6', target: 'B3' } },
+                        { data: { id: 'edge7', source: 'I7', target: 'B1' } },
+                        { data: { id: 'edge8', source: 'I8', target: 'B2' } },
+                        { data: { id: 'edge9', source: 'I9', target: 'B3' } }
+                    ]
+                },
                 style: [
                     {
                         selector: 'node',
                         style: {
-                            'background-color': '#666',
-                            'label': 'data(id)'
+                            'label': 'data(id)',
+                            'background-color': function(ele) {
+                                return ele.data('group') === 'ing' ? '#61bffc' : '#f56d6d';
+                            }
                         }
                     },
                     {
                         selector: 'edge',
                         style: {
-                            'width': 'data(weight)*1+1'
+                            'width': 3,
+                            'line-color': '#ccc',
+                        }
+                    },
+                    {
+                        selector: '.highlight_node',
+                        style: {
+                            'background-color': 'green'
+                        }
+                    },
+                    {
+                        selector: '.highlight_output',
+                        style: {
+                            'background-color': 'black'
                         }
                     }
                 ],
                 layout: {
-                    name: 'cose', // The layout algorithm to use; you can change this to 'grid', 'circle', etc.
-                    fit: true, // Whether to fit the network to the viewport
-                    padding: 30 // Padding around the network
+                    name: 'grid',
                 }
             });
-        }
 
-        // Call the function to initialize Cytoscape
-        initCytoscape();
+            var selectedNodes = [];
+
+            function subgraphMode() {
+                cy.nodes().off('click');
+                cy.on('tap', 'node', function(event) {
+                    var clickedNode = event.target;
+                    var isSelected = clickedNode.hasClass('highlight_node');
+
+                    if (isSelected) {
+                        clickedNode.removeClass('highlight_node');
+                        var index = selectedNodes.indexOf(clickedNode.id());
+                        if (index !== -1) {
+                            selectedNodes.splice(index, 1);
+                        }
+                    } else {
+                        clickedNode.addClass('highlight_node');
+                        selectedNodes.push(clickedNode.id());
+                    }
+                });
+            }
+
+            var ctrlPressed = false;
+
+            document.addEventListener('keydown', function(event) {
+                if (event.key === 'Control' && !ctrlPressed) {
+                    ctrlPressed = true;
+                    subgraphMode();
+                }
+            });
+
+        //     document.getElementById('compute').addEventListener('click', function() {
+        //         var benefits = selectedNodes.filter(function(nodeId) {
+        //             return cy.getElementById(nodeId).data('group') === 'ben';
+        //         });
+
+        //         if (benefits.length === 0) {
+        //             alert('Please select at least one benefit node.');
+        //             return;
+        //         }
+
+        //         fetch('/subgraph', {
+        //             method: 'POST',
+        //             headers: {
+        //                 'Content-Type': 'application/json'
+        //             },
+        //             body: JSON.stringify({ benefit: benefits[0] })
+        //         })
+        //         .then(response => response.json())
+        //         .then(data => {
+        //             localStorage.setItem('selectedData', JSON.stringify(data));
+        //             window.location.href = '/compute';
+        //         })
+        //         .catch(error => console.error('Error:', error));
+        //     });
+            document.getElementById('compute').addEventListener('click', function() {
+                var benefits = selectedNodes.filter(function(nodeId) {
+                    return cy.getElementById(nodeId).data('group') === 'ben';
+                });
+
+                if (benefits.length === 0) {
+                    alert('Please select at least one benefit node.');
+                    return;
+                }
+
+                fetch('/subgraph', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ benefits: benefits })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    localStorage.setItem('selectedData', JSON.stringify(data));
+                    window.location.href = '/compute';
+                })
+                .catch(error => console.error('Error:', error));
+            });
+
+        });
+        
     </script>
 </body>
 </html>
